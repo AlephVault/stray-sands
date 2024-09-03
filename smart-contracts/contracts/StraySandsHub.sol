@@ -145,6 +145,43 @@ contract StraySandsHub is ERC721, Ownable {
         emit Tag(tagHash, tag);
     }
 
+    /**
+     * Returns the redemption url for a given relay id.
+     * On invalid token, returns "".
+     */
+    function getRelayRedemptionURL(uint256 relayId) public view returns (string memory) {
+        return relays[relayId].redemptionUrl;
+    }
+
+    /**
+     * Returns the signing address for a given relay id.
+     * On invalid token, returns address(0).
+     */
+    function getRelayRedemptionSigningAddress(uint256 relayId) public view returns (address) {
+        return relays[relayId].relayAddress;
+    }
+
+    /**
+     * Returns the count of tags for a given relay id.
+     * On invalid token, returns 0.
+     */
+    function getRelayTagsCount(uint256 relayId) public view returns (uint256) {
+        return relays[relayId].tags.length;
+    }
+
+    /**
+     * Returns a given tag by index from a given relay id.
+     * If invalid token or index, returns 0;
+     */
+    function getRelayTag(uint256 relayId, uint256 index) public view returns (bytes32) {
+        bytes32[] storage tags = relays[relayId].tags;
+        if (tags.length >= index) {
+            return bytes32(0);
+        } else {
+            return tags[index];
+        }
+    }
+
     // TODO make these ones (all of them will be non-paid methods):
     // Register a relay.
     // Change a relay's name, description, or image.
@@ -152,10 +189,6 @@ contract StraySandsHub is ERC721, Ownable {
     // Change a relay's signing address.
     // Add a tag to the relay.
     // Remove a tag from the relay.
-    // Tell a relay's redemption URL.
-    // Tell a relay's signing address.
-    // Tell a relay's count of tags.
-    // Tell a relay's tag at a given index.
     //
     // Other methods will be defined in other, dependent, contracts
     // of this one (and will be relay-specific actions).
