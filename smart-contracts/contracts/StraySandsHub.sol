@@ -16,7 +16,11 @@ import "@openzeppelin/contracts/utils/Base64.sol";
  * optionally a way to burn tokens.
  */
 contract StraySandsHub is ERC721, Ownable {
+    /**
+     * This is the count of relays that can be minted.
+     */
     uint256 private constant MaxRegistrableRelaysCount = ~uint256(0);
+
     /**
      * The last tracked relay id. It is incremented before
      * registering anything, so the first one will be 1.
@@ -115,13 +119,17 @@ contract StraySandsHub is ERC721, Ownable {
      * Don't allow those operations without prior clear rules.
      */
 
+    function checkRelay(uint256 relayId) private view {
+        require(relays[relayId].exists, "StraySands: Invalid token");
+    }
+
     /**
      * Retrieves the metadata of the token.
      */
     function _getTokenMetadata(uint256 tokenId) internal view returns (
         string memory name, string memory description, string memory image
     ) {
-        require(relays[tokenId].exists, "StraySands: Invalid token");
+        checkRelay(tokenId);
         RelayData storage data = relays[tokenId];
         name = data.name;
         description = data.description;
@@ -276,10 +284,49 @@ contract StraySandsHub is ERC721, Ownable {
         relays[relayId].relayAddress = signingAddress;
     }
 
-    // TODO make these ones (all of them will be non-paid methods):
-    // Add a tag to the relay.
-    // Remove a tag from the relay.
-    //
+    /**
+     * Checks a tag to be present among the list of tags.
+     */
+    function findTag(bytes32[] storage tags, bytes32 tag) private view returns (bool, uint256) {
+        uint256 length = tags.length;
+        for(uint256 index = 0; index < length; index++) {
+            if (tags[index] == tag) {
+                return (true, index);
+            }
+        }
+        return (false, 0);
+    }
+
+    /**
+     * Adds a tag to the relay.
+     */
+    function addTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
+        checkRelay(relayId);
+        RelayData storage relay = relays[relayId];
+        bytes32[] storage tags = relay.tags;
+        uint256 length = tags.length;
+        (bool hasTag, uint256 tagIndex) = findTag(tags, tag);
+        if (hasTag) return;
+        tags.push(tag);
+    }
+
+    /**
+     * Removes a tag from a relay.
+     */
+    function removeTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
+        checkRelay(relayId);
+        RelayData storage relay = relays[relayId];
+        bytes32[] storage tags = relay.tags;
+        uint256 length = tags.length;
+        (bool hasTag, uint256 tagIndex) = findTag(tags, tag);
+        if (!hasTag) return;
+        length--;
+        for(uint256 index = tagIndex; index < length; index++) {
+            tags[index] = tags[index + 1];
+        }
+        tags.pop();
+    }
+
     // Other methods will be defined in other, dependent, contracts
     // of this one (and will be relay-specific actions).
 }
