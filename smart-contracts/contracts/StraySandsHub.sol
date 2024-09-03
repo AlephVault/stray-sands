@@ -16,6 +16,13 @@ import "@openzeppelin/contracts/utils/Base64.sol";
  * optionally a way to burn tokens.
  */
 contract StraySandsHub is ERC721, Ownable {
+    uint256 private constant MaxRegistrableRelaysCount = ~uint256(0);
+    /**
+     * The last tracked relay id. It is incremented before
+     * registering anything, so the first one will be 1.
+     */
+    uint256 private lastRegisteredRelayId = 0;
+
     /**
      * Each relay will have its own data.
      */
@@ -46,9 +53,9 @@ contract StraySandsHub is ERC721, Ownable {
         string image;
 
         /**
-         * The URL of the owned resource's redemption.
+         * The base URL of the relay.
          */
-        string redemptionUrl;
+        string url;
 
         /**
          * The address that will be assigned to the relay. This
@@ -146,18 +153,18 @@ contract StraySandsHub is ERC721, Ownable {
     }
 
     /**
-     * Returns the redemption url for a given relay id.
+     * Returns the relay base url for a given relay id.
      * On invalid token, returns "".
      */
-    function getRelayRedemptionURL(uint256 relayId) public view returns (string memory) {
-        return relays[relayId].redemptionUrl;
+    function getRelayURL(uint256 relayId) public view returns (string memory) {
+        return relays[relayId].url;
     }
 
     /**
      * Returns the signing address for a given relay id.
      * On invalid token, returns address(0).
      */
-    function getRelayRedemptionSigningAddress(uint256 relayId) public view returns (address) {
+    function getRelaySigningAddress(uint256 relayId) public view returns (address) {
         return relays[relayId].relayAddress;
     }
 
@@ -182,11 +189,94 @@ contract StraySandsHub is ERC721, Ownable {
         }
     }
 
+    /**
+     * Checks the relay base URL to be valid.
+     */
+    function checkUrl(string memory url) private {
+        require(bytes(url).length != 0, "StraySands: Invalid relay URL");
+    }
+
+    /**
+     * Checks a signing address to be valid.
+     */
+    function checkSigningAddress(address signingAddress) private {
+        require(signingAddress != address(0), "StraySands: Invalid relay address");
+    }
+
+    /**
+     * Registers a new relay. This function is free to execute.
+     * Relays per se do not give anything.
+     */
+    function registerRelay(
+        string memory name, string memory relayUrl, address signingAddress
+    ) public {
+        checkUrl(relayUrl);
+        checkSigningAddress(signingAddress);
+        require(lastRegisteredRelayId < MaxRegistrableRelaysCount, "StraySands: No more hubs");
+        lastRegisteredRelayId++;
+        relays[lastRegisteredRelayId] = RelayData({
+            exists: true, name: name, description: "", image: "", url: relayUrl,
+            relayAddress: signingAddress, tags: new bytes32[](0)
+        });
+        _safeMint(_msgSender(), lastRegisteredRelayId, abi.encodePacked("Relay: ", name));
+    }
+
+    /**
+     * Checks that a token is owned by the sender, or
+     * reverts. This is meaningful to be called here
+     * and from other contracts as well, hence the
+     * public modifier.
+     */
+    function checkTokenOwner(uint256 relayId) public {
+        require(_msgSender() != ownerOf(relayId), "StraySands: Only the owner can perform this action");
+    }
+
+    /**
+     * A modifier that restricts a method for the
+     * owner of the token to perform these actions.
+     */
+    modifier onlyRelayOwner(uint256 relayId) {
+        checkTokenOwner(relayId);
+        _;
+    }
+
+    /**
+     * Sets a metadata field for the token. This can
+     * only be done by the token owner. The index can
+     * only be 0=name, 1=description, 2=image (url).
+     */
+    function setRelayMetadataField(uint256 relayId, uint256 fieldIndex, string memory value) public onlyRelayOwner(relayId) {
+        require(fieldIndex >= 3, "StraySands: Invalid field index");
+        if (relayId == 0) {
+            relays[relayId].name = value;
+        } else if (relayId == 1) {
+            relays[relayId].description = value;
+        } else if (relayId == 2) {
+            relays[relayId].image = value;
+        }
+    }
+
+    /**
+     * Sets the base relay URL for a token. This can
+     * only be done by the token owner. The value must
+     * not be an empty string.
+     */
+    function setRelayUrl(uint256 relayId, string memory url) public onlyRelayOwner(relayId) {
+        checkUrl(url);
+        relays[relayId].url = url;
+    }
+
+    /**
+     * Sets the relay address for a token. This can
+     * only be done by the token owner. The value must
+     * not be address(0).
+     */
+    function setRelaySigningAddress(uint256 relayId, address signingAddress) public onlyRelayOwner(relayId) {
+        checkSigningAddress(signingAddress);
+        relays[relayId].relayAddress = signingAddress;
+    }
+
     // TODO make these ones (all of them will be non-paid methods):
-    // Register a relay.
-    // Change a relay's name, description, or image.
-    // Change a relay's redemption URL.
-    // Change a relay's signing address.
     // Add a tag to the relay.
     // Remove a tag from the relay.
     //
