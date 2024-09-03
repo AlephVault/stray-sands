@@ -76,6 +76,20 @@ contract StraySandsHub is ERC721, Ownable {
     mapping(uint256 => RelayData) public relays;
 
     /**
+     * This mapping tracks the existing tags.
+     * It will not have a public accessor (the
+     * client apps must enumerate the Tag event
+     * to list the existing tags).
+     */
+    mapping(bytes32 => string) private tags;
+
+    /**
+     * This event tracks when a tag is created.
+     * Users should enumerate tags from here.
+     */
+    event Tag(bytes32 hash, string tag);
+
+    /**
      * Feel free to setup your ERC721 name and symbol as you please
      * if you change your mind.
      */
@@ -117,5 +131,17 @@ contract StraySandsHub is ERC721, Ownable {
         return string(abi.encodePacked("data:application/json;base64,", Base64.encode(abi.encodePacked(
            '{"name": "', name, '", "description": "', description, '", "image": "', image, '"}'
         ))));
+    }
+
+    /**
+     * Registers a new tag. Only the owner can do this.
+     */
+    function registerTag(string memory tag) public onlyOwner {
+        bytes memory tagBytes = bytes(tag);
+        require(tagBytes.length != 0, "StraySands: Invalid tag");
+        bytes32 tagHash = keccak256(tagBytes);
+        require(bytes(tags[tagHash]).length == 0, "StraySands: Tag already registered");
+        tags[tagHash] = tag;
+        emit Tag(tagHash, tag);
     }
 }
