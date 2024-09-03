@@ -144,4 +144,19 @@ contract StraySandsHub is ERC721, Ownable {
         tags[tagHash] = tag;
         emit Tag(tagHash, tag);
     }
+
+    // TODO make these ones (all of them will be non-paid methods):
+    // Register a relay.
+    // Change a relay's name, description, or image.
+    // Change a relay's redemption URL.
+    // Change a relay's signing address.
+    // Add a tag to the relay.
+    // Remove a tag from the relay.
+    // Tell a relay's redemption URL.
+    // Tell a relay's signing address.
+    // Tell a relay's count of tags.
+    // Tell a relay's tag at a given index.
+    //
+    // Other methods will be defined in other, dependent, contracts
+    // of this one (and will be relay-specific actions).
 }
