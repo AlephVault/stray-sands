@@ -60,8 +60,18 @@ describe("StraySandsHub", () => {
         await processTags();
         await hre.common.send(contract, "registerTag", ["Audio & Video"]);
         await processTags();
+    });
 
-        console.log(tags);
+    it("must not succeed registering empty or duplicate tags", async () => {
+        // First, testing valid tag but duplicate: Games.
+        await expect(hre.common.send(contract, "registerTag", ["Games"])).to.be.revertedWith(
+            "StraySands: Tag already registered"
+        );
+
+        // Then, testing empty tags.
+        await expect(hre.common.send(contract, "registerTag", [""])).to.be.revertedWith(
+            "StraySands: Invalid tag"
+        );
     });
 
     // registerTag(tag: string): void -- only the contract owner.
