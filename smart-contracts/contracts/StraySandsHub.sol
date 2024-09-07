@@ -189,11 +189,11 @@ contract StraySandsHub is ERC721, Ownable {
      * If invalid token or index, returns 0;
      */
     function getRelayTag(uint256 relayId, uint256 index) public view returns (bytes32) {
-        bytes32[] storage tags = relays[relayId].tags;
-        if (tags.length >= index) {
+        bytes32[] storage _tags = relays[relayId].tags;
+        if (_tags.length >= index) {
             return bytes32(0);
         } else {
-            return tags[index];
+            return _tags[index];
         }
     }
 
@@ -287,10 +287,10 @@ contract StraySandsHub is ERC721, Ownable {
     /**
      * Checks a tag to be present among the list of tags.
      */
-    function findTag(bytes32[] storage tags, bytes32 tag) private view returns (bool, uint256) {
-        uint256 length = tags.length;
+    function findTag(bytes32[] storage _tags, bytes32 tag) private view returns (bool, uint256) {
+        uint256 length = _tags.length;
         for(uint256 index = 0; index < length; index++) {
-            if (tags[index] == tag) {
+            if (_tags[index] == tag) {
                 return (true, index);
             }
         }
@@ -300,31 +300,29 @@ contract StraySandsHub is ERC721, Ownable {
     /**
      * Adds a tag to the relay.
      */
-    function addTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
-        checkRelay(relayId);
+    function addRelayTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
         RelayData storage relay = relays[relayId];
-        bytes32[] storage tags = relay.tags;
-        uint256 length = tags.length;
-        (bool hasTag, uint256 tagIndex) = findTag(tags, tag);
+        bytes32[] storage _tags = relay.tags;
+        uint256 length = _tags.length;
+        (bool hasTag,) = findTag(_tags, tag);
         if (hasTag) return;
-        tags.push(tag);
+        _tags.push(tag);
     }
 
     /**
      * Removes a tag from a relay.
      */
-    function removeTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
-        checkRelay(relayId);
+    function removeRelayTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
         RelayData storage relay = relays[relayId];
-        bytes32[] storage tags = relay.tags;
-        uint256 length = tags.length;
-        (bool hasTag, uint256 tagIndex) = findTag(tags, tag);
+        bytes32[] storage _tags = relay.tags;
+        uint256 length = _tags.length;
+        (bool hasTag, uint256 tagIndex) = findTag(_tags, tag);
         if (!hasTag) return;
         length--;
         for(uint256 index = tagIndex; index < length; index++) {
-            tags[index] = tags[index + 1];
+            _tags[index] = _tags[index + 1];
         }
-        tags.pop();
+        _tags.pop();
     }
 
     // Other methods will be defined in other, dependent, contracts
