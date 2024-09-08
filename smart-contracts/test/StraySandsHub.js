@@ -144,6 +144,8 @@ describe("StraySandsHub", () => {
 
     it("must allow any basic metadata change, but only for the owner of the token (which is [2])", async () => {
         // Actually ANY string is allowed for these fields.
+
+        // BUT NOT for the non-owner.
         await expectNonTokenOwnerIsRejected(hre.common.send(contract, "setRelayMetadataField", [
             1, 0, "My Seriously Awesome Relay"
         ]));
@@ -177,8 +179,22 @@ describe("StraySandsHub", () => {
         );
     });
 
-    // setRelayMetadataField(relayId: uint256, fieldIndex: uint256 = [0:name, 1:description, 2:imageUrl], value: string) -- only the token owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
+    it("must allow url change, but only for the owner of the token (which is [2])", async () => {
+        // NOT for the non-owner.
+        await expectNonTokenOwnerIsRejected(hre.common.send(contract, "setRelayUrl", [
+            1, "https://www.example.org/alt"
+        ]));
+
+        await hre.common.send(contract, "setRelayUrl", [
+            1, "https://www.example.org/alt"
+        ], {account: 2});
+        await testAllData(
+            1, "https://www.example.org/alt", hre.common.getAddress(signers[2]), 0,
+            "My Seriously Awesome Relay", "This is a seriously awesome relay",
+            "https://www.example.org/image.png"
+        );
+    });
+
     // setRelayUrl(relayId: uint256, url: string): void -- only the token owner.
     // -- Putea si este método no lo invoca el owner del contrato.
     // setRelaySigningAddress(relayId: uint256, url: string): void -- only the token owner.
