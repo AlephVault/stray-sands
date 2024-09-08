@@ -243,8 +243,4 @@ describe("StraySandsHub", () => {
         await hre.common.send(contract, "removeRelayTag", [1, documents], {account: 2});
         expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([]));
     });
-    // addRelayTag(relayId: uint256, tag: bytes32): void -- only the token owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
-    // removeRelayTag(relayId: uint256, tag: bytes32): vod -- only the token owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
 });
