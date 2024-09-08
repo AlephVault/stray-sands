@@ -45,7 +45,7 @@ contract StraySandsAuthorization {
      * This event is triggered when a permission is granted
      * or revoked for a specific address.
      */
-    event Permission(address indexed relayId, bytes32 indexed permission, address indexed user, bool granted);
+    event Permission(uint256 indexed relayId, bytes32 indexed permission, address indexed user, bool granted);
 
     /**
      * Checks whether the permission is set for the current
@@ -56,14 +56,16 @@ contract StraySandsAuthorization {
         return permissions[relayId][StraySandsHub(hub).ownerOf(relayId)][permission][user];
     }
 
-    // Management of permissions involves this structure:
-    // [address tokenOwner][uint256 relayId][bytes32 role][address user] = (bool approved).
-    // This scheme, leveraging the `tokenOwner`, serves so all the permissions are reset
-    // (or not known) when the relay token changes owner. The new owner should manually
-    // set all the permissions manually, by iterating the Permission(relayId, roleId, user)
-    // event log.
-
-    // Methods:
-    // - setPermission(uint256 relayId, bytes32 role, address user, bool) onlyRelayOwner.
-    // - hasPermission(uint256 relayId, bytes32 role, address user).
+    /**
+     * Changes the grant status for a certain relayId and the
+     * target permission for a given user.
+     */
+    function setPermission(
+        uint256 relayId, bytes32 permission, address user, bool granted
+    ) public onlyRelayOwner(relayId) {
+        if (permissions[relayId][StraySandsHub(hub).ownerOf(relayId)][permission][user] != granted) {
+            permissions[relayId][StraySandsHub(hub).ownerOf(relayId)][permission][user] = granted;
+            emit Permission(relayId, permission, user, granted);
+        }
+    }
 }
