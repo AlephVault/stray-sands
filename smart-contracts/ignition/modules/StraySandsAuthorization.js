@@ -1,6 +1,9 @@
 const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules");
+const StraySandsHub = require("./StraySandsHub");
 
 module.exports = buildModule("StraySandsAuthorization", (m) => {
+  const { contract: hubContract } = m.useModule(StraySandsHub);
+
   // You can pass parameters (e.g. "foo") to this module and attend
   // or capture them by using line like this one:
   //
@@ -20,7 +23,7 @@ module.exports = buildModule("StraySandsAuthorization", (m) => {
   // will be passed directly to the constructor.
 
   const contract = m.contract(
-    "StraySandsAuthorization", []
+    "StraySandsAuthorization", [hubContract]
   );
 
   // In this case, the result is a single object having a contract: key
