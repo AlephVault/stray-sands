@@ -210,6 +210,39 @@ describe("StraySandsHub", () => {
             "https://www.example.org/image.png"
         );
     });
+
+    async function getTags() {
+        let tags = [];
+        const tagsCount = await hre.common.call(contract, "getRelayTagsCount", [1]);
+        for(let idx = 0; idx < tagsCount; idx++) {
+            tags.push(await hre.common.call(contract, "getRelayTag", [1, idx]));
+        }
+        return tags;
+    }
+
+    it("must allow tags change, but only for the owner of the token (which is [2])", async () => {
+        const [games, documents, audioAndVideo] = Object.keys(tags);
+
+        // NOT for the non-owner (neither adding not removing).
+        await expectNonTokenOwnerIsRejected(hre.common.send(contract, "addRelayTag", [1, games]));
+        await expectNonTokenOwnerIsRejected(hre.common.send(contract, "removeRelayTag", [1, games]));
+
+        // Getting the tags.
+        await hre.common.send(contract, "addRelayTag", [1, games], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([games]));
+        await hre.common.send(contract, "addRelayTag", [1, games], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([games]));
+        await hre.common.send(contract, "addRelayTag", [1, documents], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([games, documents]));
+        await hre.common.send(contract, "removeRelayTag", [1, audioAndVideo], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([games, documents]));
+        await hre.common.send(contract, "removeRelayTag", [1, games], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([documents]));
+        await hre.common.send(contract, "removeRelayTag", [1, audioAndVideo], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([documents]));
+        await hre.common.send(contract, "removeRelayTag", [1, documents], {account: 2});
+        expect(JSON.stringify(await getTags())).to.equal(JSON.stringify([]));
+    });
     // addRelayTag(relayId: uint256, tag: bytes32): void -- only the token owner.
     // -- Putea si este método no lo invoca el owner del contrato.
     // removeRelayTag(relayId: uint256, tag: bytes32): vod -- only the token owner.

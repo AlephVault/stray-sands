@@ -190,7 +190,7 @@ contract StraySandsHub is ERC721, Ownable {
      */
     function getRelayTag(uint256 relayId, uint256 index) public view returns (bytes32) {
         bytes32[] storage _tags = relays[relayId].tags;
-        if (_tags.length >= index) {
+        if (index >= _tags.length) {
             return bytes32(0);
         } else {
             return _tags[index];
