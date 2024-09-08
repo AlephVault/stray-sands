@@ -75,9 +75,9 @@ describe("StraySandsHub", () => {
     });
 
     it("must return empty data for invalid tokens", async () => {
-        expect(await hre.common.call(contract, "getRelayURL", [0])).to.equal("");
-        expect(await hre.common.call(contract, "getRelaySigningAddress", [0])).to.equal("0x0000000000000000000000000000000000000000");
-        expect(await hre.common.call(contract, "getRelayTagsCount", [0])).to.equal(0);
+        expect(await hre.common.call(contract, "getRelayURL", [1])).to.equal("");
+        expect(await hre.common.call(contract, "getRelaySigningAddress", [1])).to.equal("0x0000000000000000000000000000000000000000");
+        expect(await hre.common.call(contract, "getRelayTagsCount", [1])).to.equal(0);
     });
 
     // registerRelay:
@@ -104,7 +104,7 @@ describe("StraySandsHub", () => {
 
         // 2. Then, create the relay (using account [2] as sender).
         const tx = await hre.common.send(contract, "registerRelay", [
-            "My Awesome Relay", "https://www.example.org", hre.common.getAddress(signers[10])
+            "My Awesome Relay", "https://www.example.org", hre.common.getAddress(signers[2])
         ], {account: 2});
         await tx.wait();
 
@@ -120,12 +120,24 @@ describe("StraySandsHub", () => {
         expect(await hre.common.call(contract, "ownerOf", [1])).to.equal(hre.common.getAddress(signers[2]));
     });
 
-    // getRelayURL(relayId: uint256): string.
-    // getRelaySigningAddress(relayId: uint256): address.
-    // getRelayTagsCount(relayId: uint256): uint256.
-    // getRelayTag(relayId: uint256, index: uint256): bytes32.
-    // registerRelay(name: string, url: string, signingAddress: uint256): void.
-    //
+    async function testAllData(tokenId, url, signingAddress, tagsCount, name, description, image) {
+        expect(await hre.common.call(contract, "getRelayURL", [tokenId])).to.equal(url);
+        expect(await hre.common.call(contract, "getRelaySigningAddress", [tokenId])).to.equal(signingAddress);
+        expect(await hre.common.call(contract, "getRelayTagsCount", [tokenId])).to.equal(tagsCount);
+        const response = await fetch(await hre.common.call(contract, "tokenURI", [tokenId]));
+        const metadata = await response.json();
+        expect(metadata.name).to.equal(name);
+        expect(metadata.description).to.equal(description);
+        expect(metadata.image).to.equal(image);
+    }
+
+    it("must return non-empty data and initial metadata for token 1", async () => {
+        await testAllData(
+            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            "My Awesome Relay", "", ""
+        );
+    });
+
     // setRelayMetadataField(relayId: uint256, fieldIndex: uint256 = [0:name, 1:description, 2:imageUrl], value: string) -- only the token owner.
     // -- Putea si este método no lo invoca el owner del contrato.
     // setRelayUrl(relayId: uint256, url: string): void -- only the token owner.
