@@ -236,7 +236,7 @@ contract StraySandsHub is ERC721, Ownable {
      * public modifier.
      */
     function checkTokenOwner(uint256 relayId) public {
-        require(_msgSender() != ownerOf(relayId), "StraySands: Only the owner can perform this action");
+        require(_msgSender() == ownerOf(relayId), "StraySands: Only the owner can perform this action");
     }
 
     /**
@@ -254,12 +254,12 @@ contract StraySandsHub is ERC721, Ownable {
      * only be 0=name, 1=description, 2=image (url).
      */
     function setRelayMetadataField(uint256 relayId, uint256 fieldIndex, string memory value) public onlyRelayOwner(relayId) {
-        require(fieldIndex >= 3, "StraySands: Invalid field index");
-        if (relayId == 0) {
+        require(fieldIndex < 3, "StraySands: Invalid field index");
+        if (fieldIndex == 0) {
             relays[relayId].name = value;
-        } else if (relayId == 1) {
+        } else if (fieldIndex == 1) {
             relays[relayId].description = value;
-        } else if (relayId == 2) {
+        } else if (fieldIndex == 2) {
             relays[relayId].image = value;
         }
     }
