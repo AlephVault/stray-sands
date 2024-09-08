@@ -131,10 +131,49 @@ describe("StraySandsHub", () => {
         expect(metadata.image).to.equal(image);
     }
 
+    async function expectNonTokenOwnerIsRejected(promise) {
+        await expect(promise).to.be.revertedWith("StraySands: Only the owner can perform this action");
+    }
+
     it("must return non-empty data and initial metadata for token 1", async () => {
         await testAllData(
             1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
             "My Awesome Relay", "", ""
+        );
+    });
+
+    it("must allow any basic metadata change, but only for the owner of the token (which is [2])", async () => {
+        // Actually ANY string is allowed for these fields.
+        await expectNonTokenOwnerIsRejected(hre.common.send(contract, "setRelayMetadataField", [
+            1, 0, "My Seriously Awesome Relay"
+        ]));
+
+        // 1. Setting field: name.
+        await hre.common.send(contract, "setRelayMetadataField", [
+            1, 0, "My Seriously Awesome Relay"
+        ], {account: 2});
+        await testAllData(
+            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            "My Seriously Awesome Relay", "", ""
+        );
+
+        // 1. Setting field: description.
+        await hre.common.send(contract, "setRelayMetadataField", [
+            1, 1, "This is a seriously awesome relay"
+        ], {account: 2});
+        await testAllData(
+            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            "My Seriously Awesome Relay", "This is a seriously awesome relay", ""
+        );
+
+        // 1. Setting field: image.
+        await hre.common.send(contract, "setRelayMetadataField", [
+            1, 2, "https://www.example.org/image.png"
+        ], {account: 2});
+        await testAllData(
+            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            "My Seriously Awesome Relay", "This is a seriously awesome relay",
+            "https://www.example.org/image.png"
         );
     });
 
