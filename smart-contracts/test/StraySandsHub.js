@@ -104,7 +104,7 @@ describe("StraySandsHub", () => {
 
         // 2. Then, create the relay (using account [2] as sender).
         const tx = await hre.common.send(contract, "registerRelay", [
-            "My Awesome Relay", "https://www.example.org", hre.common.getAddress(signers[2])
+            "My Awesome Relay", "https://www.example.org", hre.common.getAddress(signers[10])
         ], {account: 2});
         await tx.wait();
 
@@ -137,7 +137,7 @@ describe("StraySandsHub", () => {
 
     it("must return non-empty data and initial metadata for token 1", async () => {
         await testAllData(
-            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            1, "https://www.example.org", hre.common.getAddress(signers[10]), 0,
             "My Awesome Relay", "", ""
         );
     });
@@ -155,7 +155,7 @@ describe("StraySandsHub", () => {
             1, 0, "My Seriously Awesome Relay"
         ], {account: 2});
         await testAllData(
-            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            1, "https://www.example.org", hre.common.getAddress(signers[10]), 0,
             "My Seriously Awesome Relay", "", ""
         );
 
@@ -164,7 +164,7 @@ describe("StraySandsHub", () => {
             1, 1, "This is a seriously awesome relay"
         ], {account: 2});
         await testAllData(
-            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            1, "https://www.example.org", hre.common.getAddress(signers[10]), 0,
             "My Seriously Awesome Relay", "This is a seriously awesome relay", ""
         );
 
@@ -173,7 +173,7 @@ describe("StraySandsHub", () => {
             1, 2, "https://www.example.org/image.png"
         ], {account: 2});
         await testAllData(
-            1, "https://www.example.org", hre.common.getAddress(signers[2]), 0,
+            1, "https://www.example.org", hre.common.getAddress(signers[10]), 0,
             "My Seriously Awesome Relay", "This is a seriously awesome relay",
             "https://www.example.org/image.png"
         );
@@ -189,16 +189,27 @@ describe("StraySandsHub", () => {
             1, "https://www.example.org/alt"
         ], {account: 2});
         await testAllData(
-            1, "https://www.example.org/alt", hre.common.getAddress(signers[2]), 0,
+            1, "https://www.example.org/alt", hre.common.getAddress(signers[10]), 0,
             "My Seriously Awesome Relay", "This is a seriously awesome relay",
             "https://www.example.org/image.png"
         );
     });
 
-    // setRelayUrl(relayId: uint256, url: string): void -- only the token owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
-    // setRelaySigningAddress(relayId: uint256, url: string): void -- only the token owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
+    it("must allow address change, but only for the owner of the token (which is [2])", async () => {
+        // NOT for the non-owner.
+        await expectNonTokenOwnerIsRejected(hre.common.send(contract, "setRelaySigningAddress", [
+            1, hre.common.getAddress(signers[11])
+        ]));
+
+        await hre.common.send(contract, "setRelaySigningAddress", [
+            1, hre.common.getAddress(signers[11])
+        ], {account: 2});
+        await testAllData(
+            1, "https://www.example.org/alt", hre.common.getAddress(signers[11]), 0,
+            "My Seriously Awesome Relay", "This is a seriously awesome relay",
+            "https://www.example.org/image.png"
+        );
+    });
     // addRelayTag(relayId: uint256, tag: bytes32): void -- only the token owner.
     // -- Putea si este método no lo invoca el owner del contrato.
     // removeRelayTag(relayId: uint256, tag: bytes32): vod -- only the token owner.
