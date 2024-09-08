@@ -96,6 +96,30 @@ describe("StraySandsHub", () => {
         )).to.be.revertedWith("StraySands: Invalid relay address");
     });
 
+    it("must succeed registering a new relay with non-empty URL and non-empty address (the name can be empty)", async () => {
+        // 1. First, test the token does not exist.
+        await expect(hre.common.call(contract, "ownerOf", [1])).to.be.revertedWithCustomError(
+            contract, "ERC721NonexistentToken"
+        ).withArgs(1);
+
+        // 2. Then, create the relay (using account [2] as sender).
+        const tx = await hre.common.send(contract, "registerRelay", [
+            "My Awesome Relay", "https://www.example.org", hre.common.getAddress(signers[10])
+        ], {account: 2});
+        await tx.wait();
+
+        // 3. Identify the transfer event properly.
+        const events = await contract.queryFilter(contract.filters.Transfer, -1);
+        expect(events.length).to.equal(1);
+        const [from_, to, token] = events[0].args;
+        expect(to).to.equal(hre.common.getAddress(signers[2]));
+        expect(from_).to.equal("0x0000000000000000000000000000000000000000");
+        expect(token).to.equal(1);
+
+        // 4. Finally, test the token exists for the sender.
+        expect(await hre.common.call(contract, "ownerOf", [1])).to.equal(hre.common.getAddress(signers[2]));
+    });
+
     // getRelayURL(relayId: uint256): string.
     // getRelaySigningAddress(relayId: uint256): address.
     // getRelayTagsCount(relayId: uint256): uint256.
