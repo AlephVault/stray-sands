@@ -303,7 +303,6 @@ contract StraySandsHub is ERC721, Ownable {
     function addRelayTag(uint256 relayId, bytes32 tag) public onlyRelayOwner(relayId) {
         RelayData storage relay = relays[relayId];
         bytes32[] storage _tags = relay.tags;
-        uint256 length = _tags.length;
         (bool hasTag,) = findTag(_tags, tag);
         if (hasTag) return;
         _tags.push(tag);
