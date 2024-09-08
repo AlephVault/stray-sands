@@ -80,6 +80,22 @@ describe("StraySandsHub", () => {
         expect(await hre.common.call(contract, "getRelayTagsCount", [0])).to.equal(0);
     });
 
+    // registerRelay:
+    // VALIDA el ownerOf(1) == address(0).
+    // EMITE un evento Transfer(0, msg.sender, 1).
+    // VALIDA el ownerOf(1) == msg.sender
+    it("must fail registering a new relay with empty URL or empty address", async () => {
+        // Case for empty URL.
+        await expect(hre.common.send(
+            contract, "registerRelay", ["My Awesome Relay", "", hre.common.getAddress(signers[10])]
+        )).to.be.revertedWith("StraySands: Invalid relay URL");
+
+        // Case for empty address.
+        await expect(hre.common.send(
+            contract, "registerRelay", ["My Awesome Relay", "https://www.example.org", "0x0000000000000000000000000000000000000000"]
+        )).to.be.revertedWith("StraySands: Invalid relay address");
+    });
+
     // getRelayURL(relayId: uint256): string.
     // getRelaySigningAddress(relayId: uint256): address.
     // getRelayTagsCount(relayId: uint256): uint256.
