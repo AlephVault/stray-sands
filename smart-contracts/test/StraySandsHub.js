@@ -19,7 +19,7 @@ describe("StraySandsHub", () => {
      */
     let contract = null;
 
-    /**
+    /**00000
      * Here, we'll keep all the Tag elements being registered out of calls
      * to registerTag in a StraySandsHub contract.
      */
@@ -74,12 +74,12 @@ describe("StraySandsHub", () => {
         );
     });
 
-    // registerTag(tag: string): void -- only the contract owner.
-    // -- Putea si este método no lo invoca el owner del contrato.
-    // -- Putea "StraySands: Invalid tag" si el tag es "".
-    // -- Putea "StraySands: Tag already registered" si el hash del tag ya está registrado.
-    // -- Emite Tag(hash=hashDelTag, tag=tag). Idealmente, siempre que queramos saber qué
-    //    tags hay, enumeramos este evento manualmente.
+    it("must return empty data for invalid tokens", async () => {
+        expect(await hre.common.call(contract, "getRelayURL", [0])).to.equal("");
+        expect(await hre.common.call(contract, "getRelaySigningAddress", [0])).to.equal("0x0000000000000000000000000000000000000000");
+        expect(await hre.common.call(contract, "getRelayTagsCount", [0])).to.equal(0);
+    });
+
     // getRelayURL(relayId: uint256): string.
     // getRelaySigningAddress(relayId: uint256): address.
     // getRelayTagsCount(relayId: uint256): uint256.
