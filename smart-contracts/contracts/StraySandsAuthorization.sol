@@ -53,7 +53,11 @@ contract StraySandsAuthorization {
      * the target address.
      */
     function hasPermission(uint256 relayId, bytes32 permission, address user) public view returns (bool) {
-        return permissions[relayId][StraySandsHub(hub).ownerOf(relayId)][permission][user];
+        try StraySandsHub(hub).ownerOf(relayId) returns (address owner) {
+            return permissions[relayId][owner][permission][user];
+        } catch {
+            return false;
+        }
     }
 
     /**
