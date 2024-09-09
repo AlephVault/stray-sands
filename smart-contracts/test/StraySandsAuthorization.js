@@ -131,10 +131,50 @@ describe("StraySandsAuthorization", () => {
         await network.provider.send("evm_mine");
     });
 
+    it("must not be allowed in token [2] to do FOO, and also nothing else", async () => {
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+    });
+
+    it("must allow FOO permission set on owned token [2]", async () => {
+        await (await hre.common.send(authorization, "setPermission", [
+            1, PERM_FOO, hre.common.getAddress(signers[80]), true
+        ], {account: 0})).wait();
+        const events = await authorization.queryFilter(authorization.filters.Permission, -1);
+        expect(events.length).to.equal(1);
+        const {args: [relayId, permission, user, granted]} = events[0];
+        expect(relayId).to.equal(1);
+        expect(permission).to.equal(PERM_FOO);
+        expect(user).to.equal(hre.common.getAddress(signers[80]));
+        expect(granted).to.equal(true);
+        await network.provider.send("evm_mine");
+    });
+
+    it("must be allowed in token [1] to do FOO, but nothing else", async () => {
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(true);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+    });
     // Tests to implement:
-    // 6. Can revoke that permission. It will emit an event.
-    // 7. Can revoke the same permission. It will NOT emit an event now.
-    // 8. Now, the user must not be allowed in that token / for that permission.
     // 9. Can set the same permission for the other token. It will emit an event.
     // 10. Now the user must be allowed in the OTHER token and not the main one. Also,
     //     with one permission but not the other one.
