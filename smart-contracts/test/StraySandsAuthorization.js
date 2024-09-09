@@ -70,7 +70,7 @@ describe("StraySandsAuthorization", () => {
         ], {account: 0})).to.be.revertedWith("StraySands: Only the owner can perform this action");
     });
 
-    it("must allow permission change on owned token", async () => {
+    it("must allow FOO permission set on owned token [2]", async () => {
         await (await hre.common.send(authorization, "setPermission", [
             2, PERM_FOO, hre.common.getAddress(signers[80]), true
         ], {account: 1})).wait();
@@ -84,7 +84,7 @@ describe("StraySandsAuthorization", () => {
         await network.provider.send("evm_mine");
     });
 
-    it("must allow, again, permission change on owned token", async () => {
+    it("must allow, again, FOO permission set on owned token [2]", async () => {
         await (await hre.common.send(authorization, "setPermission", [
             2, PERM_FOO, hre.common.getAddress(signers[80]), true
         ], {account: 1})).wait();
@@ -93,9 +93,45 @@ describe("StraySandsAuthorization", () => {
         await network.provider.send("evm_mine");
     });
 
+    it("must be allowed in token [2] to do FOO, but nothing else", async () => {
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(true);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_FOO, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            2, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+        expect(await hre.common.call(authorization, "hasPermission", [
+            1, PERM_BAR, hre.common.getAddress(signers[80])
+        ])).to.equal(false);
+    });
+
+    it("must allow FOO permission clear on owned token [2]", async () => {
+        await (await hre.common.send(authorization, "setPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80]), false
+        ], {account: 1})).wait();
+        const events = await authorization.queryFilter(authorization.filters.Permission, -1);
+        expect(events.length).to.equal(1);
+        const {args: [relayId, permission, user, granted]} = events[0];
+        expect(relayId).to.equal(2);
+        expect(permission).to.equal(PERM_FOO);
+        expect(user).to.equal(hre.common.getAddress(signers[80]));
+        expect(granted).to.equal(false);
+        await network.provider.send("evm_mine");
+    });
+
+    it("must allow, again, FOO permission clear on owned token [2]", async () => {
+        await (await hre.common.send(authorization, "setPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80]), false
+        ], {account: 1})).wait();
+        const events = await authorization.queryFilter(authorization.filters.Permission, -1);
+        expect(events.length).to.equal(0);
+        await network.provider.send("evm_mine");
+    });
+
     // Tests to implement:
-    // 5. The user must be allowed in that token but for that permission.
-    //    NOT in the other token and NOT in the same token but other permission.
     // 6. Can revoke that permission. It will emit an event.
     // 7. Can revoke the same permission. It will NOT emit an event now.
     // 8. Now, the user must not be allowed in that token / for that permission.
