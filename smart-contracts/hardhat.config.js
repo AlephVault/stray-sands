@@ -12,12 +12,14 @@ require('hardhat-openzeppelin-common-blueprints');
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.24",
-  hardhat: {
-    chainId: 31337,
-    accounts: {
-      mnemonic: "dentist whale pattern drastic time black cigar bike person destroy punch hungry",
-      initialBalance: "10000000000000000000000",
-      count: 100
+  networks: {
+    hardhat: {
+      chainId: 31337,
+      accounts: {
+        mnemonic: "dentist whale pattern drastic time black cigar bike person destroy punch hungry",
+        initialBalance: "10000000000000000000000",
+        count: 100
+      }
     }
   }
 };
