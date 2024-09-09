@@ -235,8 +235,8 @@ contract StraySandsHub is ERC721, Ownable {
      * and from other contracts as well, hence the
      * public modifier.
      */
-    function checkTokenOwner(uint256 relayId) public {
-        require(_msgSender() == ownerOf(relayId), "StraySands: Only the owner can perform this action");
+    function checkTokenOwner(address owner, uint256 relayId) public {
+        require(owner == ownerOf(relayId), "StraySands: Only the owner can perform this action");
     }
 
     /**
@@ -244,7 +244,7 @@ contract StraySandsHub is ERC721, Ownable {
      * owner of the token to perform these actions.
      */
     modifier onlyRelayOwner(uint256 relayId) {
-        checkTokenOwner(relayId);
+        checkTokenOwner(_msgSender(), relayId);
         _;
     }
 

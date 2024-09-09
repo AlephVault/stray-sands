@@ -11,8 +11,9 @@ const StraySandsAuthorization = require("../ignition/modules/StraySandsAuthoriza
  * @returns {Promise<*>} The fixture data (async function).
  */
 async function deployStraySandsContractsFixture() {
-    const { contract } = await ignition.deploy(StraySandsAuthorization);
-    return { hub: await contract.hub(), authorization: contract };
+    const { contract: hub } = await ignition.deploy(StraySandsHub);
+    const { contract: authorization } = await ignition.deploy(StraySandsAuthorization);
+    return { hub, authorization };
 }
 
 describe("StraySandsAuthorization", () => {
@@ -43,7 +44,7 @@ describe("StraySandsAuthorization", () => {
 
     before(async () => {
         let { hub: hub_, authorization: authorization_ } = await loadFixture(deployStraySandsContractsFixture);
-        hub = await hre.common.getContractAt(hub_);
+        hub = hub_;
         authorization = authorization_;
         signers = await hre.ethers.getSigners();
 
@@ -68,13 +69,18 @@ describe("StraySandsAuthorization", () => {
     });
 
     it("must not allow changing permission on a non-owned token", async () => {
+        await expect(hre.common.send(authorization, "setPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80]), true
+        ], {account: 0})).to.be.revertedWith("StraySands: Only the owner can perform this action");
+    });
+
+    it("must allow permission change on owned token", async () => {
         await hre.common.send(authorization, "setPermission", [
             2, PERM_FOO, hre.common.getAddress(signers[80]), true
-        ], {account: 0});
+        ], {account: 1});
     });
 
     // Tests to implement:
-    // 2. Cannot change permission on a non-owned-by-sender token (e.g. #2 with account 0).
     // 3. Can set a permission on an owned-by-sender token. It will emit an event.
     // 4. Can set the same permission again to same user. It will NOT emit an event now.
     // 5. The user must be allowed in that token but for that permission.

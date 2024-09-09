@@ -37,7 +37,7 @@ contract StraySandsAuthorization {
      * owner of the token to perform these actions.
      */
     modifier onlyRelayOwner(uint256 relayId) {
-        StraySandsHub(hub).checkTokenOwner(relayId);
+        StraySandsHub(hub).checkTokenOwner(msg.sender, relayId);
         _;
     }
 
