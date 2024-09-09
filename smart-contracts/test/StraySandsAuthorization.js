@@ -11,12 +11,11 @@ const StraySandsAuthorization = require("../ignition/modules/StraySandsAuthoriza
  * @returns {Promise<*>} The fixture data (async function).
  */
 async function deployStraySandsContractsFixture() {
-    const hub = await ignition.deploy(StraySandsHub);
-    const authorization = await ignition.deploy(StraySandsAuthorization);
-    return { hub, authorization };
+    const { contract } = await ignition.deploy(StraySandsAuthorization);
+    return { hub: await contract.hub(), authorization: contract };
 }
 
-describe("StraySandsHub", () => {
+describe("StraySandsAuthorization", () => {
     /**
      * Here, we'll keep the hub contract (of type: StraySandsHub).
      */
@@ -44,22 +43,37 @@ describe("StraySandsHub", () => {
 
     before(async () => {
         let { hub: hub_, authorization: authorization_ } = await loadFixture(deployStraySandsContractsFixture);
-        hub = hub_;
+        hub = await hre.common.getContractAt(hub_);
         authorization = authorization_;
         signers = await hre.ethers.getSigners();
 
         await hre.common.send(
-            hub_, "registerRelay", ["Relay #1", "https://relay1.example.org", hre.common.getAddress(signers[90])],
+            hub, "registerRelay", ["Relay #1", "https://relay1.example.org", hre.common.getAddress(signers[90])],
             {account: 0}
         );
         await hre.common.send(
-            hub_, "registerRelay", ["Relay #2", "https://relay2.example.org", hre.common.getAddress(signers[91])],
+            hub, "registerRelay", ["Relay #2", "https://relay2.example.org", hre.common.getAddress(signers[91])],
             {account: 1}
         );
+        const events = await hub.queryFilter(hub.filters.Transfer, 0);
+        console.log("Transfer events:", events.filter((event, _1, _2) => {
+            return event.args[0] === "0x0000000000000000000000000000000000000000"
+        }));
+    });
+
+    it("must not allow changing permissions on a non-existing token", async () => {
+        await expect(hre.common.send(authorization, "setPermission", [
+            0, PERM_FOO, hre.common.getAddress(signers[80]), true
+        ])).to.be.revertedWithCustomError(hub, "ERC721NonexistentToken").withArgs(0);
+    });
+
+    it("must not allow changing permission on a non-owned token", async () => {
+        await hre.common.send(authorization, "setPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80]), true
+        ], {account: 0});
     });
 
     // Tests to implement:
-    // 1. Cannot change permission on a non-existing token.
     // 2. Cannot change permission on a non-owned-by-sender token (e.g. #2 with account 0).
     // 3. Can set a permission on an owned-by-sender token. It will emit an event.
     // 4. Can set the same permission again to same user. It will NOT emit an event now.

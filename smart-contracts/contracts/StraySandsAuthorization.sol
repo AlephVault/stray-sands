@@ -19,7 +19,7 @@ contract StraySandsAuthorization {
     /**
      * The hub contract.
      */
-    address private hub;
+    address public hub;
 
     /**
      * The permissions scheme, like this for (relay, permission, user):
