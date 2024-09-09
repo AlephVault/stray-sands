@@ -57,9 +57,6 @@ describe("StraySandsAuthorization", () => {
             {account: 1}
         );
         const events = await hub.queryFilter(hub.filters.Transfer, 0);
-        console.log("Transfer events:", events.filter((event, _1, _2) => {
-            return event.args[0] === "0x0000000000000000000000000000000000000000"
-        }));
     });
 
     it("must not allow changing permissions on a non-existing token", async () => {
@@ -75,14 +72,29 @@ describe("StraySandsAuthorization", () => {
     });
 
     it("must allow permission change on owned token", async () => {
-        await hre.common.send(authorization, "setPermission", [
+        await (await hre.common.send(authorization, "setPermission", [
             2, PERM_FOO, hre.common.getAddress(signers[80]), true
-        ], {account: 1});
+        ], {account: 1})).wait();
+        const events = await authorization.queryFilter(authorization.filters.Permission, -1);
+        expect(events.length).to.equal(1);
+        const {args: [relayId, permission, user, granted]} = events[0];
+        expect(relayId).to.equal(2);
+        expect(permission).to.equal(PERM_FOO);
+        expect(user).to.equal(hre.common.getAddress(signers[80]));
+        expect(granted).to.equal(true);
+        await network.provider.send("evm_mine");
+    });
+
+    it("must allow, again, permission change on owned token", async () => {
+        await (await hre.common.send(authorization, "setPermission", [
+            2, PERM_FOO, hre.common.getAddress(signers[80]), true
+        ], {account: 1})).wait();
+        const events = await authorization.queryFilter(authorization.filters.Permission, -1);
+        expect(events.length).to.equal(0);
+        await network.provider.send("evm_mine");
     });
 
     // Tests to implement:
-    // 3. Can set a permission on an owned-by-sender token. It will emit an event.
-    // 4. Can set the same permission again to same user. It will NOT emit an event now.
     // 5. The user must be allowed in that token but for that permission.
     //    NOT in the other token and NOT in the same token but other permission.
     // 6. Can revoke that permission. It will emit an event.
