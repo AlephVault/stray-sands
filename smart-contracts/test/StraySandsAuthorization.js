@@ -56,7 +56,6 @@ describe("StraySandsAuthorization", () => {
             hub, "registerRelay", ["Relay #2", "https://relay2.example.org", hre.common.getAddress(signers[91])],
             {account: 1}
         );
-        const events = await hub.queryFilter(hub.filters.Transfer, 0);
     });
 
     it("must not allow changing permissions on a non-existing token", async () => {
